@@ -137,7 +137,7 @@ let package = Package(
                 path: "ParseFacebookUtilsiOS/ParseFacebookUtilsiOS",
                 exclude: ["Resources/Info-iOS.plist"],
                 resources: [.process("Resources")],
-                publicHeadersPath: "Source",
+                publicHeadersPath: "Source"),
             ]
         ),
         .target(name: "ParseFacebookUtilsTvOS",
@@ -149,9 +149,9 @@ let package = Package(
                 exclude: ["Resources/Info-tvOS.plist"],
                 resources: [.process("Resources")],
                 publicHeadersPath: "Source",
-               cSettings: [
-                .headerSearchPath("Internal"),
-            ]
+                 cSettings: [
+                    .headerSearchPath("Internal"),
+                ]
         ),
         .target(name: "ParseTwitterUtils",
                dependencies: [
@@ -162,10 +162,10 @@ let package = Package(
                 resources: [.process("Resources")],
                 publicHeadersPath: "Source",
                 cSettings: [
-                .headerSearchPath("Internal"),
-                .headerSearchPath("Internal/Dialog"),
-                .headerSearchPath("Internal/OAuthCore"),
-            ]
+                    .headerSearchPath("Internal"),
+                    .headerSearchPath("Internal/Dialog"),
+                    .headerSearchPath("Internal/OAuthCore"),
+                ]
         ),
         .target(name: "ParseUI",
                dependencies: [
