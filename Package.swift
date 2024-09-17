@@ -182,7 +182,8 @@ let package = Package(
                 cSettings: [
                     .headerSearchPath("Internal"),
                     .headerSearchPath("Internal/Cells"),
-                    .headerSearchPath("Internal/SignInWithApple/"),
+                    .headerSearchPath("Internal/Extensions"),
+                    .headerSearchPath("Internal/SignInWithApple"),
                     .headerSearchPath("Internal/Views"),
                     .headerSearchPath("Internal/Views/Buttons"),
                 ]
