@@ -138,6 +138,10 @@ let package = Package(
                 exclude: ["Resources/Info-iOS.plist"],
                 resources: [.process("Resources")],
                 publicHeadersPath: "Source"),
+                cSettings: [
+                    .headerSearchPath("Internal"),
+                    .headerSearchPath("Internal/AuthenticationProvider"),
+                ]
         .target(name: "ParseFacebookUtilsTvOS",
                dependencies: [
                 "ParseFacebookUtils",
@@ -174,13 +178,13 @@ let package = Package(
                 exclude: ["Resources/Info-iOS.plist"],
                 resources: [.process("Resources")],
                 publicHeadersPath: "Source",
-               cSettings: [
-                .headerSearchPath("Internal"),
-                .headerSearchPath("Internal/Cells"),
-                .headerSearchPath("Internal/SignInWithApple/"),
-                .headerSearchPath("Internal/Views"),
-                .headerSearchPath("Internal/Views/Buttons"),
-            ]
+                cSettings: [
+                    .headerSearchPath("Internal"),
+                    .headerSearchPath("Internal/Cells"),
+                    .headerSearchPath("Internal/SignInWithApple/"),
+                    .headerSearchPath("Internal/Views"),
+                    .headerSearchPath("Internal/Views/Buttons"),
+                ]
         ),
         .target(name: "ParseLiveQuery",
                dependencies: [
