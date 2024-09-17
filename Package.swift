@@ -138,8 +138,6 @@ let package = Package(
                 exclude: ["Resources/Info-iOS.plist"],
                 resources: [.process("Resources")],
                 publicHeadersPath: "Source"),
-            ]
-        ),
         .target(name: "ParseFacebookUtilsTvOS",
                dependencies: [
                 "ParseFacebookUtils",
