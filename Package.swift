@@ -137,11 +137,12 @@ let package = Package(
                 path: "ParseFacebookUtilsiOS/ParseFacebookUtilsiOS",
                 exclude: ["Resources/Info-iOS.plist"],
                 resources: [.process("Resources")],
-                publicHeadersPath: "Source"),
+                publicHeadersPath: "Source",
                 cSettings: [
                     .headerSearchPath("Internal"),
                     .headerSearchPath("Internal/AuthenticationProvider"),
                 ]
+        ),
         .target(name: "ParseFacebookUtilsTvOS",
                dependencies: [
                 "ParseFacebookUtils",
