@@ -357,7 +357,18 @@ static NSNumber *PFNumberCreateSafe(const char *typeEncoding, const void *bytes)
 - (void)_registerSubclassesInBundle:(NSBundle *)bundle {
     PFConsistencyAssert(bundle.loaded, @"Cannot register subclasses in an unloaded bundle: %@", bundle);
 
-    const char *executablePath = bundle.executablePath.UTF8String;
+    [self _registerSubclassesInExecutablePath:bundle.executablePath];
+
+#if defined(DEBUG) && DEBUG
+    if (bundle == [NSBundle mainBundle]) {
+        NSString *debugExecutablePath = [NSString stringWithFormat:@"%@.debug.dylib", bundle.executablePath];
+        [self _registerSubclassesInExecutablePath:debugExecutablePath];
+    }
+#endif
+}
+
+- (void)_registerSubclassesInExecutablePath:(NSString *)exePath {
+    const char *executablePath = exePath.UTF8String;
     if (executablePath == NULL) {
         return;
     }
@@ -365,15 +376,7 @@ static NSNumber *PFNumberCreateSafe(const char *typeEncoding, const void *bytes)
     dispatch_sync(_registeredSubclassesAccessQueue, ^{
         Class pfObjectClass = [PFObject class];
 
-        // There are two different paths that we will need to check for the bundle, depending on the platform.
-        // - First, we need to check the raw executable path fom the bundle.
-        //   This should be valid for most frameworks on macOS, and iOS/watchOS/tvOS simulators.
-        // - Second, we need to check the symlink resolved path - including /private/var on iOS.
-        //   This should be valid for iOS, watchOS, and tvOS devices.
-        // In case there are other platforms that require checking multiple paths that we add support for,
-        // just use a simple array here.
         char potentialPaths[2][PATH_MAX] = { };
-
         strncpy(potentialPaths[0], executablePath, PATH_MAX);
         realpath(potentialPaths[0], potentialPaths[1]);
 
@@ -381,36 +384,21 @@ static NSNumber *PFNumberCreateSafe(const char *typeEncoding, const void *bytes)
         unsigned bundleClassCount = 0;
 
         for (int i = 0; i < sizeof(potentialPaths) / sizeof(*potentialPaths); i++) {
-            #ifdef DEBUG
-                const char *debugSuffix = ".debug.dylib";
-                if (strlen(potentialPaths[i]) + strlen(debugSuffix) < sizeof(potentialPaths[i])) {
-                    strcat(potentialPaths[i], debugSuffix);
-                } else {
-                    printf("Error: Not enough space to append the suffix.\n");
-                }
-            #endif
             classNames = objc_copyClassNamesForImage(potentialPaths[i], &bundleClassCount);
             if (bundleClassCount) {
                 break;
             }
-
             free(classNames);
             classNames = NULL;
         }
 
         for (unsigned i = 0; i < bundleClassCount; i++) {
             Class bundleClass = objc_getClass(classNames[i]);
-            // For obvious reasons, don't register the PFObject class.
             if (bundleClass == pfObjectClass) {
                 continue;
             }
-            // NOTE: Cannot use isSubclassOfClass here. Some classes may be part of a system bundle (even
-            // though we attempt to filter those out) that may be an internal class which doesn't inherit from NSObject.
-            // Scary, I know!
             for (Class kls = bundleClass; kls != nil; kls = class_getSuperclass(kls)) {
                 if (kls == pfObjectClass) {
-                    // Do -conformsToProtocol: as late in the checking as possible, as its SUUUPER slow.
-                    // Behind the scenes this is a strcmp (lolwut?)
                     if ([bundleClass conformsToProtocol:@protocol(PFSubclassing)] &&
                         ![bundleClass conformsToProtocol:@protocol(PFSubclassingSkipAutomaticRegistration)]) {
                         [self _rawRegisterSubclass:bundleClass];
@@ -422,5 +410,6 @@ static NSNumber *PFNumberCreateSafe(const char *typeEncoding, const void *bytes)
         free(classNames);
     });
 }
+
 
 @end
