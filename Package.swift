@@ -7,12 +7,10 @@ let package = Package(
     defaultLocalization: "en",
     platforms: [.iOS(.v12),
                 .macOS(.v10_15),
-                .tvOS(.v12),
                 .watchOS(.v2)],
     products: [
         .library(name: "ParseObjC", targets: ["ParseCore"]),
         .library(name: "ParseFacebookUtilsiOS", targets: ["ParseFacebookUtilsiOS"]),
-        .library(name: "ParseFacebookUtilsTvOS", targets: ["ParseFacebookUtilsTvOS"]),
         .library(name: "ParseTwitterUtils", targets: ["ParseTwitterUtils"]),
         .library(name: "ParseUI", targets: ["ParseUI"]),
         .library(name: "ParseLiveQuery", targets: ["ParseLiveQuery"])
@@ -124,8 +122,8 @@ let package = Package(
             dependencies: [
                 "ParseCore",
                 .product(name: "Bolts", package: "Bolts-ObjC"),
-                .product(name: "FacebookCore", package: "facebook-ios-sdk", condition: .when(platforms: [.iOS, .tvOS])),
-                .product(name: "FacebookLogin", package: "facebook-ios-sdk", condition: .when(platforms: [.iOS, .tvOS]))],
+                .product(name: "FacebookCore", package: "facebook-ios-sdk", condition: .when(platforms: [.iOS])),
+                .product(name: "FacebookLogin", package: "facebook-ios-sdk", condition: .when(platforms: [.iOS]))],
             path: "ParseFacebookUtils/ParseFacebookUtils",
             exclude: ["Resources/Info-tvOS.plist", "Resources/Info-iOS.plist"],
             resources: [.process("Resources")],
@@ -141,19 +139,6 @@ let package = Package(
                 cSettings: [
                     .headerSearchPath("Internal"),
                     .headerSearchPath("Internal/AuthenticationProvider"),
-                ]
-        ),
-        .target(name: "ParseFacebookUtilsTvOS",
-               dependencies: [
-                "ParseFacebookUtils",
-                .product(name: "FacebookTV", package: "facebook-ios-sdk", condition: .when(platforms: [.tvOS]))
-               ],
-                path: "ParseFacebookUtilsTvOS/ParseFacebookUtilsTvOS",
-                exclude: ["Resources/Info-tvOS.plist"],
-                resources: [.process("Resources")],
-                publicHeadersPath: "Source",
-                 cSettings: [
-                    .headerSearchPath("Internal"),
                 ]
         ),
         .target(name: "ParseTwitterUtils",
