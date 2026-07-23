@@ -184,21 +184,17 @@
 
         return block(object);
     } else if ([object isKindOfClass:[NSArray class]]) {
-        NSMutableArray *newArray = [object mutableCopy];
-        [object enumerateObjectsUsingBlock:^(id child, NSUInteger idx, BOOL *stop) {
+        NSMutableArray *newArray = [NSMutableArray arrayWithCapacity:[object count]];
+        for (id child in object) {
             id newChild = [self traverseObject:child usingBlock:block seenObjects:seen];
-            if (newChild) {
-                newArray[idx] = newChild;
-            }
-        }];
+            [newArray addObject:(newChild ?: child)];
+        }
         return block(newArray);
     } else if ([object isKindOfClass:[NSDictionary class]]) {
-        NSMutableDictionary *newDictionary = [object mutableCopy];
+        NSMutableDictionary *newDictionary = [NSMutableDictionary dictionaryWithCapacity:[object count]];
         [object enumerateKeysAndObjectsUsingBlock:^(id key, id child, BOOL *stop) {
             id newChild = [self traverseObject:child usingBlock:block seenObjects:seen];
-            if (newChild) {
-                newDictionary[key] = newChild;
-            }
+            newDictionary[key] = newChild ?: child;
         }];
         return block(newDictionary);
     }
