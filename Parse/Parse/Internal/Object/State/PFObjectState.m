@@ -18,6 +18,16 @@
 #import "PFObjectUtilities.h"
 #import "PFFieldOperation.h"
 
+static NSMutableDictionary *PFMutableDictionaryByCopyingEntries(NSDictionary *dictionary) {
+    // State snapshots must own independent dictionary storage. Foundation can
+    // otherwise defer mutableCopy work until a later mutation through COW.
+    NSMutableDictionary *result = [[NSMutableDictionary alloc] initWithCapacity:dictionary.count];
+    [dictionary enumerateKeysAndObjectsUsingBlock:^(id key, id object, BOOL *stop) {
+        result[key] = object;
+    }];
+    return result;
+}
+
 @implementation PFObjectState
 
 ///--------------------------------------
@@ -43,7 +53,7 @@
     _updatedAt = state.updatedAt;
     _createdAt = state.createdAt;
 
-    _serverData = [state.serverData mutableCopy] ?: [NSMutableDictionary dictionary];
+    _serverData = PFMutableDictionaryByCopyingEntries(state.serverData);
 
     _complete = state.complete;
     _deleted = state.deleted;
@@ -99,7 +109,7 @@
 
 - (void)setServerData:(NSDictionary *)serverData {
     if (self.serverData != serverData) {
-        _serverData = [serverData mutableCopy];
+        _serverData = PFMutableDictionaryByCopyingEntries(serverData);
     }
 }
 

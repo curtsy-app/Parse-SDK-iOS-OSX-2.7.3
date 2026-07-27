@@ -1299,7 +1299,7 @@ static void PFObjectAssertValueIsKindOfValidClass(id object) {
             state.objectId = other.objectId;
             state.createdAt = other.createdAt;
             state.updatedAt = other.updatedAt;
-            state.serverData = [other._state.serverData mutableCopy];
+            state.serverData = other._state.serverData;
         }];
 
         dirty = NO;

@@ -13,6 +13,59 @@
 #import "PFOperationSet.h"
 #import "PFTestCase.h"
 
+@interface PFMutableCopyTrackingDictionary : NSDictionary
+
+@property (nonatomic, strong) NSDictionary *backingDictionary;
+@property (nonatomic, assign) BOOL mutableCopyCalled;
+
+- (instancetype)initWithDictionary:(NSDictionary *)dictionary;
+
+@end
+
+@implementation PFMutableCopyTrackingDictionary
+
+- (instancetype)initWithDictionary:(NSDictionary *)dictionary {
+    self = [super init];
+    if (!self) return nil;
+
+    _backingDictionary = dictionary;
+
+    return self;
+}
+
+- (NSUInteger)count {
+    return self.backingDictionary.count;
+}
+
+- (NSEnumerator *)keyEnumerator {
+    return self.backingDictionary.keyEnumerator;
+}
+
+- (id)objectForKey:(id)key {
+    return self.backingDictionary[key];
+}
+
+- (id)mutableCopyWithZone:(NSZone *)zone {
+    self.mutableCopyCalled = YES;
+    return [self.backingDictionary mutableCopyWithZone:zone];
+}
+
+@end
+
+@interface PFObjectStateWithOverriddenServerData : PFObjectState
+
+@property (nonatomic, strong) NSDictionary *overriddenServerData;
+
+@end
+
+@implementation PFObjectStateWithOverriddenServerData
+
+- (NSDictionary *)serverData {
+    return self.overriddenServerData;
+}
+
+@end
+
 @interface ObjectStateTests : PFTestCase
 
 @end
@@ -100,6 +153,29 @@
 
     state = [PFMutableObjectState stateWithState:sampleState];
     [self assertObjectState:state equalToState:sampleState];
+}
+
+- (void)testInitWithStateCopiesServerDataEntriesWithoutMutableCopy {
+    PFMutableCopyTrackingDictionary *sourceDictionary =
+    [[PFMutableCopyTrackingDictionary alloc] initWithDictionary:@{ @"foo": @"bar" }];
+    PFObjectStateWithOverriddenServerData *sourceState = [[PFObjectStateWithOverriddenServerData alloc] init];
+    sourceState.overriddenServerData = sourceDictionary;
+
+    PFObjectState *state = [[PFObjectState alloc] initWithState:sourceState];
+
+    XCTAssertFalse(sourceDictionary.mutableCopyCalled);
+    XCTAssertEqualObjects(state.serverData, (@{ @"foo": @"bar" }));
+}
+
+- (void)testSettingServerDataCopiesEntriesWithoutMutableCopy {
+    PFMutableCopyTrackingDictionary *sourceDictionary =
+    [[PFMutableCopyTrackingDictionary alloc] initWithDictionary:@{ @"foo": @"bar" }];
+    PFMutableObjectState *state = [[PFMutableObjectState alloc] init];
+
+    state.serverData = sourceDictionary;
+
+    XCTAssertFalse(sourceDictionary.mutableCopyCalled);
+    XCTAssertEqualObjects(state.serverData, (@{ @"foo": @"bar" }));
 }
 
 - (void)testCopying {
