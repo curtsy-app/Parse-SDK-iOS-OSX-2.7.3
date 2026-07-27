@@ -12,6 +12,45 @@
 #import "PFOperationSet.h"
 #import "PFTestCase.h"
 
+@interface PFEnumerationTrackingDictionary : NSDictionary
+
+@property (nonatomic, strong) NSDictionary *backingDictionary;
+@property (nonatomic, assign) BOOL enumerationCalled;
+
+- (instancetype)initWithDictionary:(NSDictionary *)dictionary;
+
+@end
+
+@implementation PFEnumerationTrackingDictionary
+
+- (instancetype)initWithDictionary:(NSDictionary *)dictionary {
+    self = [super init];
+    if (!self) return nil;
+
+    _backingDictionary = dictionary;
+
+    return self;
+}
+
+- (NSUInteger)count {
+    return self.backingDictionary.count;
+}
+
+- (NSEnumerator *)keyEnumerator {
+    return self.backingDictionary.keyEnumerator;
+}
+
+- (id)objectForKey:(id)key {
+    return self.backingDictionary[key];
+}
+
+- (void)enumerateKeysAndObjectsUsingBlock:(void (^)(id key, id obj, BOOL *stop))block {
+    self.enumerationCalled = YES;
+    [self.backingDictionary enumerateKeysAndObjectsUsingBlock:block];
+}
+
+@end
+
 @interface ObjectEstimatedDataTests : PFTestCase
 
 @end
@@ -107,6 +146,30 @@
 
     XCTAssertEqualObjects(snapshot, (@{ @"a" : @"b" }));
     XCTAssertEqualObjects(data.dictionaryRepresentation, (@{ @"a" : @"updated", @"c" : @"new" }));
+}
+
+- (void)testInitializationCopiesServerDataByEnumeratingEntries {
+    PFEnumerationTrackingDictionary *serverData =
+    [[PFEnumerationTrackingDictionary alloc] initWithDictionary:@{ @"a" : @"b" }];
+
+    PFObjectEstimatedData *data = [PFObjectEstimatedData estimatedDataFromServerData:serverData
+                                                                   operationSetQueue:nil];
+
+    XCTAssertTrue(serverData.enumerationCalled);
+    XCTAssertEqualObjects(data.dictionaryRepresentation, (@{ @"a" : @"b" }));
+}
+
+- (void)testInitialMutationDoesNotChangeServerData {
+    NSMutableDictionary *serverData = [@{ @"a" : @"original", @"nested" : @[ @"same-object" ] } mutableCopy];
+    id nestedValue = serverData[@"nested"];
+    PFObjectEstimatedData *data = [PFObjectEstimatedData estimatedDataFromServerData:serverData
+                                                                   operationSetQueue:nil];
+
+    [data applyFieldOperation:[PFSetOperation setWithValue:@"updated"] forKey:@"a"];
+
+    XCTAssertEqualObjects(serverData[@"a"], @"original");
+    XCTAssertEqualObjects(data[@"a"], @"updated");
+    XCTAssertEqual(data[@"nested"], nestedValue);
 }
 
 @end

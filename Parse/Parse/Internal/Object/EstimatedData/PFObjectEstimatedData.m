@@ -37,8 +37,14 @@
     self = [super init];
     if (!self) return nil;
 
-    // Don't use mutableCopy to make sure we never initialize _dataDictionary to `nil`.
-    _dataDictionary = [NSMutableDictionary dictionaryWithDictionary:serverData];
+    // Build independent mutable storage entry-by-entry. Foundation can optimize
+    // dictionaryWithDictionary: with copy-on-write storage, which makes the
+    // first field operation retain every existing value while detaching it.
+    NSMutableDictionary *dataDictionary = [[NSMutableDictionary alloc] initWithCapacity:serverData.count];
+    [serverData enumerateKeysAndObjectsUsingBlock:^(id key, id object, BOOL *stop) {
+        dataDictionary[key] = object;
+    }];
+    _dataDictionary = dataDictionary;
     for (PFOperationSet *operationSet in operationSetQueue) {
         [PFObjectUtilities applyOperationSet:operationSet toDictionary:_dataDictionary];
     }
