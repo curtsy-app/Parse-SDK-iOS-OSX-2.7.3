@@ -72,13 +72,14 @@
 }
 
 - (NSDictionary *)dictionaryRepresentation {
-    // Building a dictionary from the keys and values guarantees that the snapshot
-    // does not share copy-on-write storage with the mutable estimated data. The
-    // snapshot is intentionally used after PFObject's lock has been released, so
-    // sharing storage here can race with a later field operation.
-    NSArray *keys = _dataDictionary.allKeys;
-    NSArray *values = [_dataDictionary objectsForKeys:keys notFoundMarker:[NSNull null]];
-    return [[NSDictionary alloc] initWithObjects:values forKeys:keys];
+    // Copy each entry into storage that is independent from the live estimated
+    // data. This avoids both NSDictionary's copy-on-write path and the
+    // intermediate value array created by objectsForKeys:.
+    NSMutableDictionary *snapshot = [[NSMutableDictionary alloc] initWithCapacity:_dataDictionary.count];
+    [_dataDictionary enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
+        snapshot[key] = obj;
+    }];
+    return [snapshot copy];
 }
 
 ///--------------------------------------

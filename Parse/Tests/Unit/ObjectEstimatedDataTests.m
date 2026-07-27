@@ -97,4 +97,16 @@
     XCTAssertNotEqual(dictionary, data.dictionaryRepresentation);
 }
 
+- (void)testDictionaryRepresentationDoesNotShareMutableStorage {
+    PFObjectEstimatedData *data = [PFObjectEstimatedData estimatedDataFromServerData:@{ @"a" : @"b" }
+                                                                   operationSetQueue:nil];
+    NSDictionary *snapshot = data.dictionaryRepresentation;
+
+    [data applyFieldOperation:[PFSetOperation setWithValue:@"updated"] forKey:@"a"];
+    [data applyFieldOperation:[PFSetOperation setWithValue:@"new"] forKey:@"c"];
+
+    XCTAssertEqualObjects(snapshot, (@{ @"a" : @"b" }));
+    XCTAssertEqualObjects(data.dictionaryRepresentation, (@{ @"a" : @"updated", @"c" : @"new" }));
+}
+
 @end
